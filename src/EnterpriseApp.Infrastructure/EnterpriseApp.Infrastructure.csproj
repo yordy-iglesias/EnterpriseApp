@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EnterpriseApp.Infrastructure</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- NU1603: HybridCache 9.0.0 no existe en NuGet; la version minima disponible es 9.3.0.
+         NU1605: DI.Abstractions se ancla a 9.0.3 para evitar el downgrade transitivo de Redis. -->
+    <NoWarn>NU1603;NU1605</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ASP.NET Core shared framework — required by Infrastructure.Authorization
+         (IAuthorizationHandler, AuthorizationPolicyBuilder, IAuthorizationPolicyProvider).
+         Acceptable trade-off: this project wires authorization handlers, so it
+         already lives in the ASP.NET Core ecosystem. Application stays clean. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- JWT signing for Role.PermissionsSnapshot (replaces NHCS ConcurrencyStamp pattern) -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- EF Core 9 — núcleo + los tres proveedores soportados -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore"                Version="9.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"        Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer"      Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite"         Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design"         Version="9.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- Caching: anclamos a 9.3.0 porque 9.0.0 no existe en el feed publico -->
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid"             Version="9.3.0" />
+    <!-- Observability -->
+    <PackageReference Include="Serilog.AspNetCore"   Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Seq"    Version="9.0.0" />
+    <!-- Resilience -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="9.3.0" />
+    <!-- DI — anclado a 9.0.3 para resolver el downgrade transitivo de Redis 9.0.0 -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EnterpriseApp.Application\EnterpriseApp.Application.csproj" />
+  </ItemGroup>
+</Project>

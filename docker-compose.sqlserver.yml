@@ -1,0 +1,59 @@
+version: "3.9"
+
+# ─── SQL Server override ──────────────────────────────────────────────────────
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.sqlserver.yml up -d
+#
+# Esto arranca: SQL Server 2022 + Redis (postgres queda detenido).
+# La API debe configurarse con:
+#   Database__Provider=SqlServer
+#   Database__ConnectionStringName=SqlServerConnection
+
+services:
+
+  # Deshabilitar postgres cuando se usa SQL Server
+  postgres:
+    profiles: ["disabled"]
+
+  # ── SQL Server 2022 ────────────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: enterpriseapp-sqlserver
+    environment:
+      ACCEPT_EULA:       "Y"
+      MSSQL_SA_PASSWORD: "Your_password123!"
+      MSSQL_PID:         Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      # sqlcmd está en /opt/mssql-tools18 en SQL Server 2022
+      test: >
+        /opt/mssql-tools18/bin/sqlcmd
+        -S localhost -U sa -P "Your_password123!"
+        -Q "SELECT 1" -b -No
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
+  # Sobrescribir la API para usar SQL Server
+  api:
+    profiles: ["full"]
+    environment:
+      Database__Provider:                   SqlServer
+      Database__ConnectionStringName:       SqlServerConnection
+      ConnectionStrings__SqlServerConnection: >-
+        Server=sqlserver,1433;Database=EnterpriseAppDb;
+        User Id=sa;Password=Your_password123!;TrustServerCertificate=True
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  sqlserver_data:

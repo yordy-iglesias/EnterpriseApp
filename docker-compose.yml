@@ -1,0 +1,72 @@
+version: "3.9"
+
+# ─── Default stack: PostgreSQL + Redis ───────────────────────────────────────
+#
+#   docker compose up -d              → PostgreSQL + Redis
+#   docker compose up -d api          → + API container
+#
+# Para SQL Server usa el override:
+#   docker compose -f docker-compose.yml -f docker-compose.sqlserver.yml up -d
+
+services:
+
+  # ── PostgreSQL 16 ─────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: enterpriseapp-postgres
+    environment:
+      POSTGRES_DB:       EnterpriseAppDb
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d EnterpriseAppDb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Redis 7 ───────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: enterpriseapp-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ── API (opcional — solo para staging/CI) ────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: src/EnterpriseApp.API/Dockerfile
+    container_name: enterpriseapp-api
+    profiles: ["full"]
+    ports:
+      - "5000:8080"
+      - "5001:8081"
+    environment:
+      ASPNETCORE_ENVIRONMENT:               Production
+      Database__Provider:                   PostgreSQL
+      Database__ConnectionStringName:       DefaultConnection
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=EnterpriseAppDb;Username=postgres;Password=postgres"
+      ConnectionStrings__Redis:             "redis:6379"
+      Jwt__Key:                             "CHANGE-ME-IN-PRODUCTION-use-a-256bit-secret-key-here!"
+      Jwt__Issuer:                          "EnterpriseApp"
+      Jwt__Audience:                        "EnterpriseApp.Clients"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

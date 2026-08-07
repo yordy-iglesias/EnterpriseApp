@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "serena": {
+      "command": "${USERPROFILE}\\.local\\bin\\serena.exe",
+      "args": [
+        "start-mcp-server",
+        "--context",
+        "claude-code",
+        "--project",
+        "C:\\Users\\yordy\\OneDrive\\Desktop\\Trabajo\\Proyectos\\Template\\claude-templates\\backend-dotnet\\clean-architecture"
+      ]
+    }
+  }
+}

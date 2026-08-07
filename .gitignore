@@ -1,0 +1,43 @@
+## .NET / C# ##
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.swp
+*.sln.docstates
+
+## Publish / build output ##
+publish/
+out/
+
+## Secrets & env ##
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+*.pfx
+*.p12
+.env
+.env.*
+
+## Logs ##
+*.log
+Logs/
+
+## EF Core migrations snapshots (keep in source control) ##
+# Do NOT ignore Migrations/ folder
+
+## Docker ##
+docker-compose.override.yml
+
+## OS ##
+.DS_Store
+Thumbs.db
+
+## Rider ##
+.idea/
+
+## VS Code ##
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json

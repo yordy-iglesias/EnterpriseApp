@@ -1,0 +1,42 @@
+{
+  "model": "claude-sonnet-4-6",
+  "permissions": {
+    "allow": [
+      "Bash(dotnet:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Edit",
+      "Write",
+      "Read"
+    ],
+    "deny": [
+      "Bash(dotnet ef database drop:*)",
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)"
+    ]
+  },
+  "context_files": [
+    "CLAUDE.md",
+    ".claude/rules/code-style.md",
+    ".claude/rules/testing.md",
+    ".claude/rules/security.md",
+    ".claude/rules/caching.md",
+    ".claude/rules/observability.md"
+  ],
+  "hooks": {
+    "post_tool_use": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet build --no-restore -warnaserror 2>&1 | tail -5"
+          }
+        ]
+      }
+    ]
+  }
+}

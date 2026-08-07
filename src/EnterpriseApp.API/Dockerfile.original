@@ -1,0 +1,31 @@
+# ── Build stage ──────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copy solution + project files first (better layer caching)
+COPY EnterpriseApp.sln .
+COPY src/EnterpriseApp.Domain/EnterpriseApp.Domain.csproj             src/EnterpriseApp.Domain/
+COPY src/EnterpriseApp.Application/EnterpriseApp.Application.csproj   src/EnterpriseApp.Application/
+COPY src/EnterpriseApp.Infrastructure/EnterpriseApp.Infrastructure.csproj src/EnterpriseApp.Infrastructure/
+COPY src/EnterpriseApp.API/EnterpriseApp.API.csproj                   src/EnterpriseApp.API/
+
+RUN dotnet restore src/EnterpriseApp.API/EnterpriseApp.API.csproj
+
+# Copy everything and publish
+COPY . .
+RUN dotnet publish src/EnterpriseApp.API/EnterpriseApp.API.csproj \
+    -c Release -o /app/publish --no-restore
+
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+WORKDIR /app
+
+# Non-root user for security
+RUN adduser --disabled-password --gecos "" appuser
+USER appuser
+
+COPY --from=build /app/publish .
+
+EXPOSE 8080 8081
+
+ENTRYPOINT ["dotnet", "EnterpriseApp.API.dll"]
