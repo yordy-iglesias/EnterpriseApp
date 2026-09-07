@@ -38,6 +38,16 @@ public sealed class RoleRepository(AppDbContext db) : IRoleRepository
                        .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<string>> GetRoleNamesForUserAsync(
+        string userId, Guid? tenantId, CancellationToken ct = default)
+    {
+        return await db.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.UserId == userId && ur.TenantId == tenantId)
+            .Join(db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .ToListAsync(ct);
+    }
+
     public Task<bool> ExistsAsync(RoleId id, CancellationToken ct = default) =>
         db.Roles.AnyAsync(r => r.Id == id, ct);
 

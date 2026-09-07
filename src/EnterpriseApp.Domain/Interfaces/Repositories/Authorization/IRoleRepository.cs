@@ -15,6 +15,12 @@ public interface IRoleRepository
     Task<IReadOnlyList<Role>> GetByUserIdAsync(string userId, CancellationToken ct = default);
     Task<bool> ExistsAsync(RoleId id, CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns the names of all roles assigned to the given user within the specified tenant.
+    /// </summary>
+    Task<IReadOnlyList<string>> GetRoleNamesForUserAsync(
+        string userId, Guid? tenantId, CancellationToken ct = default);
+
     Task AddAsync(Role role, CancellationToken ct = default);
     void Update(Role role);
     void Remove(Role role);
