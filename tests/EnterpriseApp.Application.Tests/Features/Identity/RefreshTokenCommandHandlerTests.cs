@@ -53,7 +53,8 @@ public sealed class RefreshTokenCommandHandlerTests
     public async Task Handle_ValidToken_ReturnsNewAuthResponse()
     {
         var user = MakeUserWithToken("validhash_plain");
-        _uow.Setup(u => u.Users.GetByRefreshTokenHashAsync(It.IsAny<string>(), default))
+        _uow.Setup(u => u.Users.GetByRefreshTokenHashAsync(
+                It.Is<string>(h => h == ComputeHash("validhash_plain")), default))
             .ReturnsAsync(user);
         _perms.Setup(p => p.GetPermissionsForUserAsync(It.IsAny<string>(), null, default))
             .ReturnsAsync((IReadOnlySet<string>)new HashSet<string>());
@@ -92,7 +93,8 @@ public sealed class RefreshTokenCommandHandlerTests
         user.RotateRefreshToken(originalHash, "newhash", DateTimeOffset.UtcNow.AddDays(7), "ip");
         user.ClearDomainEvents();
 
-        _uow.Setup(u => u.Users.GetByRefreshTokenHashAsync(It.IsAny<string>(), default))
+        _uow.Setup(u => u.Users.GetByRefreshTokenHashAsync(
+                It.Is<string>(h => h == ComputeHash("validhash_plain")), default))
             .ReturnsAsync(user);
         // GenerateRefreshToken is called before the rotation check — must be set up to avoid NPE.
         _tokens.Setup(t => t.GenerateRefreshToken())
@@ -102,5 +104,6 @@ public sealed class RefreshTokenCommandHandlerTests
         var result = await BuildHandler().Handle(new RefreshTokenCommand("validhash_plain", "ip"), default);
 
         result.Error.Should().Be(AuthErrors.RefreshTokenReused);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
     }
 }
