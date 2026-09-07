@@ -15,7 +15,7 @@ internal sealed class GetUserByIdQueryHandler(IUnitOfWork uow)
         var user = await uow.Users.GetByIdAsync(UserId.From(q.Id), ct);
         if (user is null) return Result.Failure<UserDetailDto>(AuthErrors.UserNotFound);
 
-        var roles = await uow.Roles.GetRoleNamesForUserAsync(user.Id.ToString(), user.TenantId, ct);
+        var roles = await uow.Roles.GetRoleNamesForUserAsync(user.Id.Value.ToString(), user.TenantId, ct);
 
         return Result.Success(new UserDetailDto(
             Id:             user.Id.Value,
