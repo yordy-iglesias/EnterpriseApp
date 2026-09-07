@@ -1,4 +1,5 @@
 using EnterpriseApp.Domain.Interfaces.Repositories.Authorization;
+using EnterpriseApp.Domain.Interfaces.Repositories.Identity;
 
 namespace EnterpriseApp.Domain.Interfaces.Repositories;
 
@@ -15,6 +16,9 @@ public interface IUnitOfWork
     IPermissionRepository          Permissions    { get; }
     IUserRoleRepository            UserRoles      { get; }
     IPermissionAuditLogRepository  PermissionAuditLogs { get; }
+
+    // ── Identity ──────────────────────────────────────────────────────────────
+    IUserRepository Users { get; }
 
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

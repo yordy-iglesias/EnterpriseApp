@@ -1,5 +1,6 @@
 using EnterpriseApp.Domain.Interfaces.Repositories;
 using EnterpriseApp.Domain.Interfaces.Repositories.Authorization;
+using EnterpriseApp.Domain.Interfaces.Repositories.Identity;
 using EnterpriseApp.Infrastructure.Persistence;
 
 namespace EnterpriseApp.Infrastructure.Repositories;
@@ -15,7 +16,8 @@ public sealed class UnitOfWork(
     IRoleRepository                roles,
     IPermissionRepository          permissions,
     IUserRoleRepository            userRoles,
-    IPermissionAuditLogRepository  permissionAuditLogs)
+    IPermissionAuditLogRepository  permissionAuditLogs,
+    IUserRepository                users)
     : IUnitOfWork
 {
     public ITodoRepository                Todos               => todos;
@@ -23,6 +25,7 @@ public sealed class UnitOfWork(
     public IPermissionRepository          Permissions         => permissions;
     public IUserRoleRepository            UserRoles           => userRoles;
     public IPermissionAuditLogRepository  PermissionAuditLogs => permissionAuditLogs;
+    public IUserRepository                Users               => users;
 
     public Task<int> SaveChangesAsync(CancellationToken ct = default) =>
         db.SaveChangesAsync(ct);

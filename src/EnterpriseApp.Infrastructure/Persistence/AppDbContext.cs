@@ -1,7 +1,7 @@
 using EnterpriseApp.Application.Common.Interfaces;
 using EnterpriseApp.Domain.Entities;
 using EnterpriseApp.Domain.Entities.Authorization;
-using EnterpriseApp.Infrastructure.Persistence.Interceptors;
+using EnterpriseApp.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace EnterpriseApp.Infrastructure.Persistence;
@@ -11,14 +11,10 @@ namespace EnterpriseApp.Infrastructure.Persistence;
 /// <para>Implements <see cref="IApplicationDbContext"/> so Application handlers
 /// can depend on the interface, not the concrete EF type.</para>
 /// <para>Domain events are dispatched after SaveChangesAsync via
-/// <see cref="DomainEventDispatcherInterceptor"/>.</para>
-/// <para>Interceptors are optional (null-safe) so the design-time
-/// <see cref="AppDbContextFactory"/> can create instances without a DI container.</para>
+/// <see cref="DomainEventDispatcherInterceptor"/>, which is registered once
+/// through the <c>AddDbContext</c> factory in InfrastructureServiceExtensions.</para>
 /// </summary>
-public sealed class AppDbContext(
-    DbContextOptions<AppDbContext>        options,
-    AuditableEntitySaveChangesInterceptor? auditInterceptor,
-    DomainEventDispatcherInterceptor?      domainEventInterceptor)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     : DbContext(options), IApplicationDbContext
 {
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
@@ -30,12 +26,9 @@ public sealed class AppDbContext(
     public DbSet<UserRole>            UserRoles            => Set<UserRole>();
     public DbSet<PermissionAuditLog>  PermissionAuditLogs  => Set<PermissionAuditLog>();
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        // Only register interceptors when they are available (not during design-time migrations).
-        if (auditInterceptor is not null && domainEventInterceptor is not null)
-            optionsBuilder.AddInterceptors(auditInterceptor, domainEventInterceptor);
-    }
+    // ── Identity ─────────────────────────────────────────────────────────────
+    public DbSet<User>          Users         => Set<User>();
+    public DbSet<RefreshToken>  RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,6 +37,7 @@ public sealed class AppDbContext(
 
         // Global query filter: exclude soft-deleted rows from all queries.
         modelBuilder.Entity<TodoItem>().HasQueryFilter(t => !t.IsDeleted);
+        modelBuilder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
 
         base.OnModelCreating(modelBuilder);
     }

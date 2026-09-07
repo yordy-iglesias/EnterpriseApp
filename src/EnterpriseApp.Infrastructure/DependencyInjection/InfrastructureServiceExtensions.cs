@@ -2,6 +2,7 @@ using EnterpriseApp.Application.Common.Authorization;
 using EnterpriseApp.Application.Common.Interfaces;
 using EnterpriseApp.Domain.Interfaces.Repositories;
 using EnterpriseApp.Domain.Interfaces.Repositories.Authorization;
+using EnterpriseApp.Domain.Interfaces.Repositories.Identity;
 using EnterpriseApp.Infrastructure.Authorization;
 using EnterpriseApp.Infrastructure.Caching;
 using EnterpriseApp.Infrastructure.Persistence;
@@ -9,6 +10,7 @@ using EnterpriseApp.Infrastructure.Persistence.Interceptors;
 using EnterpriseApp.Infrastructure.Persistence.Seeds;
 using EnterpriseApp.Infrastructure.Repositories;
 using EnterpriseApp.Infrastructure.Repositories.Authorization;
+using EnterpriseApp.Infrastructure.Repositories.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -62,6 +64,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IPermissionRepository,          PermissionRepository>();
         services.AddScoped<IUserRoleRepository,            UserRoleRepository>();
         services.AddScoped<IPermissionAuditLogRepository,  PermissionAuditLogRepository>();
+        services.AddScoped<IUserRepository,                UserRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // ── Authorization — DB-driven RBAC + ABAC ────────────────────────────
