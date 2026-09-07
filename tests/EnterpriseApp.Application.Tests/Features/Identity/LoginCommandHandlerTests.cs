@@ -23,10 +23,7 @@ public sealed class LoginCommandHandlerTests
 
     private readonly AuthOptions _opts = new()
     {
-        AccessTokenMinutes      = 15,
-        RefreshTokenDays        = 7,
-        MaxFailedAccessAttempts = 5,
-        LockoutMinutes          = 15,
+        Lockout = new() { MaxFailedAttempts = 5, LockoutMinutes = 15 },
     };
 
     private LoginCommandHandler BuildHandler() =>

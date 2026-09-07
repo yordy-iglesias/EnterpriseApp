@@ -32,7 +32,7 @@ internal sealed class LoginCommandHandler(
         var verification = hasher.Verify(user.PasswordHash, cmd.Password);
         if (verification == PasswordVerificationResult.Failed)
         {
-            user.RecordFailedLogin(o.MaxFailedAccessAttempts, TimeSpan.FromMinutes(o.LockoutMinutes));
+            user.RecordFailedLogin(o.Lockout.MaxFailedAttempts, TimeSpan.FromMinutes(o.Lockout.LockoutMinutes));
             await uow.SaveChangesAsync(ct);
             return Result.Failure<AuthResponse>(AuthErrors.InvalidCredentials);
         }
