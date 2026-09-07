@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using EnterpriseApp.Application.Common.Auth;
 using EnterpriseApp.Application.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -32,9 +31,13 @@ internal sealed class TokenService(IConfiguration config, IOptions<AuthOptions> 
             new("email",     subject.Email),
             new("psv",       subject.SnapshotVersion),
             new("auth_time", subject.AuthTime.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            new("amr",       "pwd"),
-            new("perms",     JsonSerializer.Serialize(subject.PermissionCodes.ToArray())),
         };
+
+        foreach (var method in subject.AuthMethods)
+            claims.Add(new Claim("amr", method));
+
+        foreach (var perm in subject.PermissionCodes)
+            claims.Add(new Claim("perms", perm));
 
         if (subject.TenantId is { } tid)
             claims.Add(new Claim("tid", tid.ToString()));
@@ -57,7 +60,7 @@ internal sealed class TokenService(IConfiguration config, IOptions<AuthOptions> 
     {
         var o     = opts.Value;
         var bytes = RandomNumberGenerator.GetBytes(64);
-        var plain = Convert.ToBase64String(bytes);
+        var plain = Base64UrlEncoder.Encode(bytes);
         var hash  = ComputeHash(plain);
         var exp   = DateTimeOffset.UtcNow.AddDays(o.RefreshToken.ExpiryDays);
         return new RefreshTokenResult(plain, hash, exp);

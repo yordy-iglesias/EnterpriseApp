@@ -50,7 +50,8 @@ internal sealed class RefreshTokenCommandHandler(
             RoleNames:       roles,
             PermissionCodes: perms,
             SnapshotVersion: psv,
-            AuthTime:        DateTimeOffset.UtcNow);
+            AuthTime:        DateTimeOffset.UtcNow,
+            AuthMethods:     ["pwd"]);
 
         var access = tokens.GenerateAccessToken(subject);
         await uow.SaveChangesAsync(ct);

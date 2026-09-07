@@ -8,7 +8,8 @@ public sealed record TokenSubject(
     IEnumerable<string> RoleNames,
     IEnumerable<string> PermissionCodes,
     string              SnapshotVersion,
-    DateTimeOffset      AuthTime);
+    DateTimeOffset      AuthTime,
+    IEnumerable<string> AuthMethods);
 
 public sealed record AccessTokenResult(string Token, DateTimeOffset ExpiresAt);
 public sealed record RefreshTokenResult(string Plain, string Hash, DateTimeOffset ExpiresAt);

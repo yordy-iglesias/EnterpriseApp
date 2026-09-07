@@ -67,7 +67,8 @@ internal sealed class LoginCommandHandler(
             RoleNames:       roles,
             PermissionCodes: perms,
             SnapshotVersion: psv,
-            AuthTime:        authTime);
+            AuthTime:        authTime,
+            AuthMethods:     ["pwd"]);
 
         var access  = tokens.GenerateAccessToken(subject);
         var refresh = tokens.GenerateRefreshToken();
