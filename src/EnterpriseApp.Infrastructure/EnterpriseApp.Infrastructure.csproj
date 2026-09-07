@@ -34,8 +34,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <!-- Caching: anclamos a 9.3.0 porque 9.0.0 no existe en el feed publico -->
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.3" />
+    <!-- Caching: Hybrid se ancla a 9.3.0 porque 9.0.0 no existe en el feed publico.
+         StackExchangeRedis DEBE quedarse en >= 9.0.19. En 9.0.5 y anteriores el ctor de
+         RedisCacheImpl llama a IsHybridCacheDefined(sp) -> sp.GetService<HybridCache>(),
+         y DefaultHybridCache resuelve IDistributedCache -> RedisCacheImpl: ciclo de DI
+         infinito que el contenedor NO detecta (el GetService ocurre dentro del ctor, no
+         es una dependencia declarada). Cada nivel de recursion bloquea un hilo via
+         StackGuard.RunOnEmptyStack -> thread pool starvation -> TODA request se cuelga.
+         Verificado A/B en repro aislado: 9.0.5 cuelga, 9.0.19 resuelve OK. -->
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.19" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid"             Version="9.3.0" />
     <!-- Observability -->
     <PackageReference Include="Serilog.AspNetCore"   Version="9.0.0" />
@@ -43,8 +50,10 @@
     <PackageReference Include="Serilog.Sinks.Seq"    Version="9.0.0" />
     <!-- Resilience -->
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="9.3.0" />
-    <!-- DI — anclado a 9.0.3 para resolver el downgrade transitivo de Redis 9.0.0 -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
+    <!-- DI — debe ir alineado con la version de Caching.StackExchangeRedis (9.0.19),
+         que arrastra Microsoft.Extensions.Options/DI.Abstractions 9.0.19. Dejarlo en
+         9.0.3 provoca NU1605 (package downgrade) en EnterpriseApp.API. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.19" />
   </ItemGroup>
 
   <ItemGroup>

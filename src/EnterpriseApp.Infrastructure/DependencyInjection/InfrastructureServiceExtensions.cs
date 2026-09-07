@@ -1,5 +1,7 @@
+using EnterpriseApp.Application.Common.Auth;
 using EnterpriseApp.Application.Common.Authorization;
 using EnterpriseApp.Application.Common.Interfaces;
+using EnterpriseApp.Infrastructure.Identity;
 using EnterpriseApp.Domain.Interfaces.Repositories;
 using EnterpriseApp.Domain.Interfaces.Repositories.Authorization;
 using EnterpriseApp.Domain.Interfaces.Repositories.Identity;
@@ -73,6 +75,11 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IAuthorizationHandler,      PermissionAuthorizationHandler>();
         services.AddScoped<IAuthorizationHandler,      StepUpMfaAuthorizationHandler>();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+        // ── Identity — password hashing + JWT signing ────────────────────────
+        services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
+        services.AddScoped<IPasswordHasher, PasswordHasherAdapter>();
+        services.AddScoped<ITokenService, TokenService>();
 
         // ── Database seeder ──────────────────────────────────────────────────
         services.AddScoped<DatabaseSeeder>();

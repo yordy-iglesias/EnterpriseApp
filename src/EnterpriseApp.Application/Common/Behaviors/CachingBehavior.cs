@@ -23,7 +23,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
     ICacheService              cache,
     ILogger<CachingBehavior<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
-    where TRequest  : ICachedQuery<TResponse>
+    where TRequest  : notnull
     where TResponse : class
 {
     public async Task<TResponse> Handle(
@@ -31,7 +31,10 @@ public sealed class CachingBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken                 ct)
     {
-        var key = request.CacheKey;
+        if (request is not ICachedQuery<TResponse> cachedQuery)
+            return await next();
+
+        var key = cachedQuery.CacheKey;
 
         var cached = await cache.GetAsync<TResponse>(key, ct);
         if (cached is not null)
@@ -44,8 +47,9 @@ public sealed class CachingBehavior<TRequest, TResponse>(
 
         var response = await next();
 
-        await cache.SetAsync(key, response, request.Expiration, ct);
+        if (response is not null)
+            await cache.SetAsync(key, response, cachedQuery.Expiration, ct);
 
-        return response;
+        return response!;
     }
 }

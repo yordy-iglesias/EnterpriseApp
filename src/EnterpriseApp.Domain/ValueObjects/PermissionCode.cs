@@ -35,15 +35,15 @@ public sealed partial class PermissionCode : ValueObject
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
 
-        var normalized = value.Trim().ToLowerInvariant();
-        if (!CodeRegex().IsMatch(normalized))
+        var trimmed = value.Trim();
+        if (!CodeRegex().IsMatch(trimmed))
             throw new DomainException(
                 $"Invalid permission code '{value}'. " +
-                "Expected format: '{module}.{action}[.{qualifier}]' (kebab-case, 2-3 segments).");
+                "Expected format: '{module}.{action}[.{qualifier}]' (lowercase kebab-case, 2-3 segments).");
 
-        var parts = normalized.Split('.');
+        var parts = trimmed.Split('.');
         return new PermissionCode(
-            value:     normalized,
+            value:     trimmed,
             module:    parts[0],
             action:    parts[1],
             qualifier: parts.Length == 3 ? parts[2] : null);
@@ -53,12 +53,12 @@ public sealed partial class PermissionCode : ValueObject
     {
         code = null;
         if (string.IsNullOrWhiteSpace(value)) return false;
-        var normalized = value.Trim().ToLowerInvariant();
-        if (!CodeRegex().IsMatch(normalized)) return false;
+        var trimmed = value.Trim();
+        if (!CodeRegex().IsMatch(trimmed)) return false;
 
-        var parts = normalized.Split('.');
+        var parts = trimmed.Split('.');
         code = new PermissionCode(
-            value:     normalized,
+            value:     trimmed,
             module:    parts[0],
             action:    parts[1],
             qualifier: parts.Length == 3 ? parts[2] : null);

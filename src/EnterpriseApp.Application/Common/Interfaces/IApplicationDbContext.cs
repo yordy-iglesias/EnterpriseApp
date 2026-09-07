@@ -1,5 +1,6 @@
 using EnterpriseApp.Domain.Entities;
 using EnterpriseApp.Domain.Entities.Authorization;
+using EnterpriseApp.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -19,6 +20,10 @@ public interface IApplicationDbContext
     DbSet<RolePermission>     RolePermissions     { get; }
     DbSet<UserRole>           UserRoles           { get; }
     DbSet<PermissionAuditLog> PermissionAuditLogs { get; }
+
+    // ── Identity ──────────────────────────────────────────────────────────────
+    DbSet<User>         Users         { get; }
+    DbSet<RefreshToken> RefreshTokens { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

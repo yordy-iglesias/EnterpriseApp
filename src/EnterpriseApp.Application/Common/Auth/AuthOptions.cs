@@ -7,7 +7,8 @@ public sealed class AuthOptions
     public JwtOptions Jwt { get; init; } = new();
     public RefreshTokenOptions RefreshToken { get; init; } = new();
     public LockoutOptions Lockout { get; init; } = new();
-    public StepUpMfaOptions StepUpMfa { get; init; } = new();
+    public StepUpMfaOptions  StepUpMfa  { get; init; } = new();
+    public SeedAdminOptions  SeedAdmin  { get; init; } = new();
 }
 
 public sealed class JwtOptions
@@ -33,4 +34,13 @@ public sealed class StepUpMfaOptions
 {
     public bool Enabled { get; init; } = false;
     public int MaxAgeMinutes { get; init; } = 5;
+}
+
+public sealed class SeedAdminOptions
+{
+    public bool   Enabled   { get; init; } = true;
+    public string Email     { get; init; } = "admin@enterpriseapp.local";
+    public string Password  { get; init; } = "Admin123!";
+    public string FirstName { get; init; } = "System";
+    public string LastName  { get; init; } = "Administrator";
 }

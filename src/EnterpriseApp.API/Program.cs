@@ -130,6 +130,20 @@ try
             tracing.AddEntityFrameworkCoreInstrumentation()
                    .AddRedisInstrumentation());
 
+    // ── Rate Limiting ─────────────────────────────────────────────────────────
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.AddPolicy("login", ctx =>
+            System.Threading.RateLimiting.RateLimitPartition.GetSlidingWindowLimiter(
+                ctx.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+                _ => new System.Threading.RateLimiting.SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit       = 10,
+                    Window            = TimeSpan.FromMinutes(1),
+                    SegmentsPerWindow = 6,
+                }));
+    });
+
     // ── Build ─────────────────────────────────────────────────────────────────
     var app = builder.Build();
 
@@ -148,6 +162,7 @@ try
     app.UseHttpsRedirection();
     app.UseCors("AllowFrontend");
     app.UseAuthentication();
+    app.UseRateLimiter();
     app.UseAuthorization();
 
     app.MapControllers();

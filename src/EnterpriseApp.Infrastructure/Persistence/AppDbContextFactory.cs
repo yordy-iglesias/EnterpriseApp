@@ -49,8 +49,7 @@ internal sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbCon
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
         ApplyProvider(optionsBuilder, dbOptions, connStr);
 
-        // Design-time context does not need interceptors.
-        return new AppDbContext(optionsBuilder.Options, null!, null!);
+        return new AppDbContext(optionsBuilder.Options);
     }
 
     internal static void ApplyProvider(

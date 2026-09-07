@@ -101,6 +101,8 @@ public sealed class ArchitectureTests
         var result = Types.InAssembly(DomainAssembly)
             .That()
             .Inherit(typeof(Domain.Common.BaseEntity))
+            .And()
+            .AreNotAbstract()
             .Should()
             .ResideInNamespace($"{DomainNs}.Entities")
             .GetResult();

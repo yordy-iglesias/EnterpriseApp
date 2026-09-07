@@ -24,8 +24,7 @@ public sealed class PermissionCodeTests
     }
 
     [Theory]
-    [InlineData("Patient.View")]            // PascalCase
-    [InlineData("paciente.ver")]            // mixed-language allowed by regex but consistency anti-pattern
+    [InlineData("Patient.View")]            // PascalCase — uppercase rejected by regex
     [InlineData("patient")]                 // single segment
     [InlineData("a.b.c.d")]                 // 4 segments
     [InlineData("patient_view")]            // snake_case
@@ -40,10 +39,10 @@ public sealed class PermissionCodeTests
     }
 
     [Fact]
-    public void From_IsCaseInsensitive_StoresLowercased()
+    public void From_IsStrictLowercase_UppercaseThrows()
     {
-        var parsed = PermissionCode.From("PATIENT.VIEW");
-        parsed.Value.Should().Be("patient.view");
+        var act = () => PermissionCode.From("PATIENT.VIEW");
+        act.Should().Throw<Exception>("permission codes must be lowercase kebab-case");
     }
 
     [Fact]

@@ -1,7 +1,11 @@
+using EnterpriseApp.Application.Common.Auth;
+using EnterpriseApp.Application.Common.Interfaces;
 using EnterpriseApp.Domain.Entities.Authorization;
+using EnterpriseApp.Domain.Entities.Identity;
 using EnterpriseApp.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EnterpriseApp.Infrastructure.Persistence.Seeds;
 
@@ -9,8 +13,14 @@ namespace EnterpriseApp.Infrastructure.Persistence.Seeds;
 /// Idempotent seeder for authorization reference data. Run on startup or via the
 /// migration service. Safe to call multiple times — it inserts only what is missing.
 /// </summary>
-public sealed class DatabaseSeeder(AppDbContext db, ILogger<DatabaseSeeder> logger)
+public sealed class DatabaseSeeder(
+    AppDbContext              db,
+    IPasswordHasher           hasher,
+    IOptions<AuthOptions>     authOptions,
+    ILogger<DatabaseSeeder>   logger)
 {
+    private readonly AuthOptions _authOptions = authOptions.Value;
+
     public async Task SeedAsync(CancellationToken ct = default)
     {
         await SeedPermissionsAsync(ct);
@@ -18,6 +28,8 @@ public sealed class DatabaseSeeder(AppDbContext db, ILogger<DatabaseSeeder> logg
         await SeedRolePermissionsAsync(ct);
         await db.SaveChangesAsync(ct);
         logger.LogInformation("Authorization seed completed.");
+
+        await SeedAdminUserAsync(ct);
     }
 
     private async Task SeedPermissionsAsync(CancellationToken ct)
@@ -74,7 +86,6 @@ public sealed class DatabaseSeeder(AppDbContext db, ILogger<DatabaseSeeder> logg
 
     private async Task SeedRolePermissionsAsync(CancellationToken ct)
     {
-        // Save first so role/permission Ids are available for the join inserts.
         await db.SaveChangesAsync(ct);
 
         var allRoles = await db.Roles
@@ -106,5 +117,49 @@ public sealed class DatabaseSeeder(AppDbContext db, ILogger<DatabaseSeeder> logg
                 role.GrantPermission(permission, "system-seed");
             }
         }
+    }
+
+    private async Task SeedAdminUserAsync(CancellationToken ct)
+    {
+        var seedOpts = _authOptions.SeedAdmin;
+        if (!seedOpts.Enabled) return;
+
+        var normalized = seedOpts.Email.Trim().ToLowerInvariant();
+        var exists = await db.Users.IgnoreQueryFilters()
+            .AnyAsync(u => u.NormalizedEmail == normalized, ct);
+        if (exists) return;
+
+        var hash = hasher.Hash(seedOpts.Password);
+        var user = User.Create(
+            email:        Email.From(seedOpts.Email),
+            passwordHash: hash,
+            firstName:    seedOpts.FirstName,
+            lastName:     seedOpts.LastName,
+            tenantId:     null,
+            createdBy:    "system-seed");
+
+        user.ConfirmEmail();
+
+        var superAdmin = await db.Roles.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(r => r.NormalizedName == "SUPER-ADMIN", ct);
+
+        await db.Users.AddAsync(user, ct);
+        await db.SaveChangesAsync(ct);
+
+        if (superAdmin is not null)
+        {
+            var userRole = UserRole.Create(
+                userId:     user.Id.ToString(),
+                roleId:     superAdmin.Id,
+                tenantId:   null,
+                assignedBy: "system-seed");
+            await db.UserRoles.AddAsync(userRole, ct);
+            await db.SaveChangesAsync(ct);
+        }
+
+        if (seedOpts.Password == "Admin123!")
+            logger.LogWarning("Admin user seeded with DEFAULT password. Change it before deploying to production!");
+        else
+            logger.LogInformation("Admin user seeded: {Email}", seedOpts.Email);
     }
 }
