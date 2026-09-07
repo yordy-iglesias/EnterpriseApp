@@ -81,6 +81,7 @@ public sealed class UserTests
 
         user.SecurityStamp.Should().NotBe(stampBefore);
         user.DomainEvents.Should().Contain(e => e is UserPasswordChanged);
+        user.GetActiveRefreshToken("hash1").Should().BeNull();
     }
 
     [Fact]
@@ -93,6 +94,7 @@ public sealed class UserTests
 
         user.IsActive.Should().BeFalse();
         user.DomainEvents.Should().Contain(e => e is UserDeactivated);
+        user.GetActiveRefreshToken("tok1").Should().BeNull();
     }
 
     [Fact]
@@ -104,5 +106,21 @@ public sealed class UserTests
 
         user.GetActiveRefreshToken("newhash").Should().NotBeNull();
         user.GetActiveRefreshToken("oldhash").Should().BeNull();
+    }
+
+    [Fact]
+    public void RotateRefreshToken_WithRevokedToken_FiresReuseDetectedAndRevokesAll()
+    {
+        var user = CreateUser();
+        user.IssueRefreshToken("revokedhash", DateTimeOffset.UtcNow.AddDays(7), "ip");
+        user.IssueRefreshToken("activehash", DateTimeOffset.UtcNow.AddDays(7), "ip");
+
+        // Revoke the first token explicitly
+        user.RotateRefreshToken("revokedhash", "newhash", DateTimeOffset.UtcNow.AddDays(7), "ip");
+        // Now "revokedhash" is revoked (replaced by "newhash"); attempt reuse
+        user.RotateRefreshToken("revokedhash", "attackhash", DateTimeOffset.UtcNow.AddDays(7), "ip");
+
+        user.DomainEvents.Should().Contain(e => e is RefreshTokenReuseDetected);
+        user.RefreshTokens.Should().NotContain(t => t.IsActive);
     }
 }
