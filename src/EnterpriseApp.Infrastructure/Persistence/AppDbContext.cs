@@ -36,8 +36,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         // Global query filter: exclude soft-deleted rows from all queries.
+        // Note: User filter is registered in UserConfiguration to keep config co-located.
         modelBuilder.Entity<TodoItem>().HasQueryFilter(t => !t.IsDeleted);
-        modelBuilder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
 
         base.OnModelCreating(modelBuilder);
     }

@@ -4,7 +4,8 @@ namespace EnterpriseApp.Domain.Entities.Identity;
 
 public sealed class RefreshToken : AuditableEntity<Guid>
 {
-    private RefreshToken() : base(Guid.NewGuid()) { }
+    private RefreshToken() { }                        // EF Core
+    private RefreshToken(Guid id) : base(id) { }     // factory path
 
     public UserId          UserId         { get; private set; } = default!;
     public string          TokenHash      { get; private set; } = default!;
@@ -20,7 +21,7 @@ public sealed class RefreshToken : AuditableEntity<Guid>
     public static RefreshToken Create(UserId userId, string tokenHash, DateTimeOffset expiresAt, string? createdByIp)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tokenHash);
-        return new RefreshToken
+        return new RefreshToken(Guid.NewGuid())
         {
             UserId      = userId,
             TokenHash   = tokenHash,

@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EnterpriseApp — Clean Architecture",
+    "quality_profile": "showcase",
+    "viewBox": [1220, 480]
+  },
+  "components": [
+    { "id": "client",       "type": "external",  "label": "API Client",        "sublabel": "Browser / Mobile / SDK",        "pos": [50,   245], "size": [130, 64] },
+    { "id": "jwt",          "type": "security",  "label": "JWT Middleware",     "sublabel": "Bearer · Identity",             "pos": [220,   90], "size": [155, 60], "tag": "HS256" },
+    { "id": "api",          "type": "backend",   "label": "ASP.NET Core 9",    "sublabel": "Minimal APIs · :5001",          "pos": [220,  245], "size": [155, 64], "tag": "Scalar UI" },
+    { "id": "hybrid_cache", "type": "database",  "label": "HybridCache",       "sublabel": "L1 MemoryCache (1–2 min)",      "pos": [420,   90], "size": [175, 60] },
+    { "id": "pipeline",     "type": "backend",   "label": "MediatR Pipeline",  "sublabel": "Log → Validate → Cache → Txn", "pos": [420,  245], "size": [175, 64] },
+    { "id": "handler",      "type": "backend",   "label": "Application Layer", "sublabel": "Command / Query Handlers",      "pos": [650,  245], "size": [155, 64] },
+    { "id": "domain",       "type": "backend",   "label": "Domain",            "sublabel": "Entities · Events · Result",   "pos": [650,  390], "size": [155, 60] },
+    { "id": "ef_core",      "type": "backend",   "label": "EF Core 9",         "sublabel": "DbContext · Interceptors",      "pos": [855,  245], "size": [145, 64] },
+    { "id": "seq",          "type": "external",  "label": "Serilog → Seq",     "sublabel": "Structured logs · traceId",    "pos": [855,  390], "size": [145, 60] },
+    { "id": "redis",        "type": "database",  "label": "Redis 7",           "sublabel": "HybridCache L2 · :6379",       "pos": [1050,  90], "size": [140, 60] },
+    { "id": "postgres",     "type": "database",  "label": "PostgreSQL 16",     "sublabel": "primary :5432",                "pos": [1050, 245], "size": [140, 64], "tag": "soft-delete" }
+  ],
+  "boundaries": [
+    { "kind": "region",         "label": "Clean Architecture — src/EnterpriseApp.*", "wraps": ["api", "pipeline", "hybrid_cache", "handler", "domain", "ef_core"] },
+    { "kind": "security-group", "label": "JWT Auth Gate · /api/v1/**",               "wraps": ["jwt", "api"] }
+  ],
+  "connections": [
+    { "id": "c1",  "from": "client",       "to": "api",          "label": "HTTPS :5001",           "variant": "emphasis", "labelAt": [200, 329] },
+    { "id": "c2",  "from": "jwt",          "to": "api",          "label": "verify Bearer",          "variant": "security", "fromSide": "bottom", "toSide": "top",    "labelAt": [297, 182] },
+    { "id": "c3",  "from": "api",          "to": "pipeline",     "label": "ISender.Send()",         "labelAt": [397, 329] },
+    { "id": "c4",  "from": "pipeline",     "to": "hybrid_cache", "label": "CachingBehavior",       "variant": "dashed",   "fromSide": "top",    "toSide": "bottom" },
+    { "id": "c5",  "from": "pipeline",     "to": "handler",      "label": "dispatch" },
+    { "id": "c6",  "from": "handler",      "to": "domain",       "label": "domain model",                                "fromSide": "bottom", "toSide": "top",    "labelDy": 24 },
+    { "id": "c7",  "from": "handler",      "to": "ef_core",      "label": "IApplicationDbContext",  "labelAt": [830, 329] },
+    { "id": "c8",  "from": "ef_core",      "to": "postgres",     "label": "SQL queries",           "variant": "emphasis", "labelAt": [1025, 329] },
+    { "id": "c9",  "from": "ef_core",      "to": "seq",          "label": "Serilog",               "variant": "dashed",   "fromSide": "bottom", "toSide": "top",    "labelDy": 24 },
+    { "id": "c10", "from": "hybrid_cache", "to": "redis",        "label": "L2 store",              "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "violet", "title": "Primary Path",          "items": ["Client → HTTPS :5001 → JWT verify → ASP.NET Core Minimal API → MediatR pipeline → Application handler → EF Core → PostgreSQL"] },
+    { "dot": "cyan",   "title": "HybridCache (.NET 9)",  "items": ["L1 MemoryCache: 1–2 min TTL (in-process)", "L2 Redis: 5–10 min TTL (distributed)", "CachingBehavior intercepts IQuery<T> inside the MediatR pipeline"] },
+    { "dot": "emerald","title": "Clean Architecture",    "items": ["Domain: zero NuGet dependencies — pure C#", "Application depends only on Domain + MediatR + FluentValidation", "Infrastructure (EF Core 9, Redis, Serilog) never imported by Domain"] },
+    { "dot": "rose",   "title": "Security",              "items": ["JWT Bearer (HS256) + ASP.NET Core Identity + RBAC", "DB-driven permissions: Role → Permission table (no hardcoded enums)", "RFC 7807 ProblemDetails on all errors via GlobalExceptionMiddleware"] }
+  ]
+}

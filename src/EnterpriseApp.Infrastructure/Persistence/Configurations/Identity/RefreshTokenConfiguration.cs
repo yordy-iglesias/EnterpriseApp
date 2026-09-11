@@ -9,6 +9,7 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
         builder.HasKey(rt => rt.Id);
+        builder.Property(rt => rt.Id).ValueGeneratedNever();
 
         builder.Property(rt => rt.UserId)
             .HasConversion(id => id.Value, v => UserId.From(v))

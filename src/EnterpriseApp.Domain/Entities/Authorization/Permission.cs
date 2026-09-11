@@ -11,7 +11,8 @@ namespace EnterpriseApp.Domain.Entities.Authorization;
 /// </summary>
 public sealed class Permission : AuditableEntity<PermissionId>
 {
-    private Permission() : base(PermissionId.New()) { }
+    private Permission() { }                                // EF Core
+    private Permission(PermissionId id) : base(id) { }     // factory path
 
     /// <summary>Factory — validates the code via <see cref="PermissionCode"/>.</summary>
     public static Permission Create(
@@ -26,7 +27,7 @@ public sealed class Permission : AuditableEntity<PermissionId>
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
         var parsed = PermissionCode.From(code);
 
-        return new Permission
+        return new Permission(PermissionId.New())
         {
             Code        = parsed,
             DisplayName = displayName.Trim(),

@@ -21,9 +21,15 @@ public abstract class BaseEntity
 /// </summary>
 public abstract class AuditableEntity<TId> : BaseEntity, IAuditInfo where TId : notnull
 {
+    // Parameterless ctor for EF Core materialization — Id stays default!
+    // and is written by EF Core immediately after via the private setter.
+    protected AuditableEntity() { }
+
+    // Ctor for factory/domain use — caller supplies the new identity.
     protected AuditableEntity(TId id) => Id = id;
 
-    public TId Id { get; protected init; }
+    // private set: EF Core can write this post-construction; init-only cannot.
+    public TId Id { get; private set; } = default!;
 
     // IAuditInfo — setters are public so the interceptor can write them.
     public DateTimeOffset  CreatedAt  { get; set; } = DateTimeOffset.UtcNow;

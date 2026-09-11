@@ -12,7 +12,8 @@ namespace EnterpriseApp.Domain.Entities;
 public sealed class TodoItem : AuditableEntity<TodoId>
 {
     // ── Private constructor for EF Core ─────────────────────────────────────
-    private TodoItem() : base(TodoId.New()) { }
+    private TodoItem() { }                           // EF Core
+    private TodoItem(TodoId id) : base(id) { }      // factory path
 
     // ── Factory method ───────────────────────────────────────────────────────
     public static TodoItem Create(
@@ -24,7 +25,7 @@ public sealed class TodoItem : AuditableEntity<TodoId>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
 
-        var todo = new TodoItem
+        var todo = new TodoItem(TodoId.New())
         {
             Title       = title.Trim(),
             Description = description?.Trim(),

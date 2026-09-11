@@ -15,7 +15,8 @@ public sealed class Role : AuditableEntity<RoleId>
 {
     private readonly List<RolePermission> _rolePermissions = [];
 
-    private Role() : base(RoleId.New()) { }
+    private Role() { }                          // EF Core
+    private Role(RoleId id) : base(id) { }     // factory path
 
     public static Role Create(
         string  name,
@@ -29,7 +30,7 @@ public sealed class Role : AuditableEntity<RoleId>
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(normalizedName);
 
-        var role = new Role
+        var role = new Role(RoleId.New())
         {
             Name           = name.Trim(),
             NormalizedName = normalizedName.Trim().ToUpperInvariant(),

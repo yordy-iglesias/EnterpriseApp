@@ -8,7 +8,8 @@ public sealed class User : AuditableEntity<UserId>
 {
     private readonly List<RefreshToken> _refreshTokens = [];
 
-    private User() : base(UserId.New()) { }
+    private User() { }                         // EF Core materialisation — Id set by EF after construction
+    private User(UserId id) : base(id) { }    // factory path
 
     // ── Identity ──────────────────────────────────────────────────────────────
     public Email   Email           { get; private set; } = default!;
@@ -47,7 +48,7 @@ public sealed class User : AuditableEntity<UserId>
         ArgumentException.ThrowIfNullOrWhiteSpace(firstName);
         ArgumentException.ThrowIfNullOrWhiteSpace(lastName);
 
-        var user = new User
+        var user = new User(UserId.New())
         {
             Email           = email,
             NormalizedEmail = email.Normalized,

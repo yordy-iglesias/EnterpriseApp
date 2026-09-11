@@ -11,7 +11,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Id)
-            .HasConversion(id => id.Value, v => UserId.From(v));
+            .HasConversion(id => id.Value, v => UserId.From(v))
+            .ValueGeneratedNever();
 
         builder.OwnsOne(u => u.Email, email =>
         {
