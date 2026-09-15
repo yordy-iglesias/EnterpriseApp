@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet ef:*)",
+      "Bash(dotnet user-secrets:*)"
+    ]
+  },
+  "disabledMcpjsonServers": [
+    "chrome-devtools"
+  ],
+  "enabledMcpjsonServers": [
+    "serena"
+  ]
+}
