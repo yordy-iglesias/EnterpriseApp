@@ -36,6 +36,11 @@ public sealed partial class PermissionCode : ValueObject
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
 
         var trimmed = value.Trim();
+
+        // "*" is the system-level wildcard reserved for super-admin — bypass segment validation.
+        if (trimmed == "*")
+            return new PermissionCode("*", "system", "wildcard", null);
+
         if (!CodeRegex().IsMatch(trimmed))
             throw new DomainException(
                 $"Invalid permission code '{value}'. " +
@@ -54,6 +59,13 @@ public sealed partial class PermissionCode : ValueObject
         code = null;
         if (string.IsNullOrWhiteSpace(value)) return false;
         var trimmed = value.Trim();
+
+        if (trimmed == "*")
+        {
+            code = new PermissionCode("*", "system", "wildcard", null);
+            return true;
+        }
+
         if (!CodeRegex().IsMatch(trimmed)) return false;
 
         var parts = trimmed.Split('.');

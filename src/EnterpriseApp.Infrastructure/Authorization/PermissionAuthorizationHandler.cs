@@ -56,21 +56,14 @@ public sealed class PermissionAuthorizationHandler(IPermissionService permission
     {
         var perms = new HashSet<string>(StringComparer.Ordinal);
 
-        // 1. Multiple "perm" claims
+        // Multiple "perms" claims — one per permission code (TokenService format).
+        foreach (var c in user.FindAll("perms"))
+            if (!string.IsNullOrWhiteSpace(c.Value)) perms.Add(c.Value);
+
+        // Fallback: singular "perm" claim (alternative token format).
         foreach (var c in user.FindAll("perm"))
             if (!string.IsNullOrWhiteSpace(c.Value)) perms.Add(c.Value);
 
-        // 2. Single "perms" claim with JSON array
-        var permsJson = user.FindFirstValue("perms");
-        if (!string.IsNullOrWhiteSpace(permsJson))
-        {
-            try
-            {
-                var arr = System.Text.Json.JsonSerializer.Deserialize<string[]>(permsJson);
-                if (arr is not null) foreach (var p in arr) perms.Add(p);
-            }
-            catch (System.Text.Json.JsonException) { /* ignore malformed claim */ }
-        }
         return perms;
     }
 

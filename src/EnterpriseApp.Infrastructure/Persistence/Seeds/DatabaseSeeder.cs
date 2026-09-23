@@ -1,5 +1,6 @@
 using EnterpriseApp.Application.Common.Auth;
 using EnterpriseApp.Application.Common.Interfaces;
+using EnterpriseApp.Domain.Authorization;
 using EnterpriseApp.Domain.Entities.Authorization;
 using EnterpriseApp.Domain.Entities.Identity;
 using EnterpriseApp.Domain.ValueObjects;
@@ -54,6 +55,32 @@ public sealed class DatabaseSeeder(
 
             await db.Permissions.AddAsync(permission, ct);
             logger.LogDebug("Seeded permission {Code}", item.Code);
+        }
+
+        // Seed any special permission codes declared in SystemRoles (e.g. wildcard "*")
+        // that are not covered by Items.
+        var itemCodes = PermissionsSeed.Items.Select(i => i.Code).ToHashSet(StringComparer.Ordinal);
+        var specialCodes = PermissionsSeed.SystemRoles
+            .Where(r => r.PermissionCodes is not null)
+            .SelectMany(r => r.PermissionCodes!)
+            .Distinct(StringComparer.Ordinal)
+            .Where(c => !itemCodes.Contains(c));
+
+        foreach (var code in specialCodes)
+        {
+            if (existingCodes.Contains(code, StringComparer.Ordinal)) continue;
+
+            var permission = Permission.Create(
+                code:        code,
+                displayName: code == PermissionCodes.Wildcard ? "Wildcard (full access)" : code,
+                description: code == PermissionCodes.Wildcard ? "Grants all permissions — super-admin only." : null,
+                isSensitive: true,
+                isSystem:    true,
+                tenantId:    null,
+                createdBy:   "system-seed");
+
+            await db.Permissions.AddAsync(permission, ct);
+            logger.LogDebug("Seeded special permission {Code}", code);
         }
     }
 
@@ -115,6 +142,26 @@ public sealed class DatabaseSeeder(
                     continue;
 
                 role.GrantPermission(permission, "system-seed");
+            }
+        }
+
+        // Link special permission codes declared directly in SystemRoles (e.g. wildcard for super-admin).
+        foreach (var roleSeed in PermissionsSeed.SystemRoles.Where(r => r.PermissionCodes is { Length: > 0 }))
+        {
+            var role = allRoles.FirstOrDefault(
+                r => r.NormalizedName == roleSeed.Name.ToUpperInvariant());
+            if (role is null) continue;
+
+            foreach (var code in roleSeed.PermissionCodes!)
+            {
+                var permission = allPermissions.FirstOrDefault(p => (string)p.Code == code);
+                if (permission is null) continue;
+
+                if (role.RolePermissions.Any(rp => rp.PermissionId == permission.Id))
+                    continue;
+
+                role.GrantPermission(permission, "system-seed");
+                logger.LogDebug("Granted special permission {Code} to role {Role}", code, roleSeed.Name);
             }
         }
     }
