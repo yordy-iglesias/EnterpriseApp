@@ -168,14 +168,36 @@ try
 
     if (app.Environment.IsDevelopment())
     {
+        // Native OpenAPI spec endpoint — consumed by whichever UI is active.
         app.MapOpenApi("/openapi/{documentName}.json").AllowAnonymous();
-        app.MapScalarApiReference(options =>
+
+        var docsProvider = app.Configuration["ApiDocs:Provider"] ?? "Scalar";
+
+        switch (docsProvider.ToUpperInvariant())
         {
-            options.Title = "EnterpriseApp API";
-            options.Servers = [];
-        }).AllowAnonymous();
-        app.MapGet("/", () => Results.Redirect("/scalar/v1")).AllowAnonymous()
-            .ExcludeFromDescription();
+            case "SWAGGERUI":
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/openapi/v1.json", "EnterpriseApp API v1");
+                    options.RoutePrefix = "swagger";
+                    options.DocumentTitle = "EnterpriseApp API";
+                    options.EnableDeepLinking();
+                    options.DisplayRequestDuration();
+                });
+                app.MapGet("/", () => Results.Redirect("/swagger")).AllowAnonymous()
+                    .ExcludeFromDescription();
+                break;
+
+            default: // "Scalar" and anything else
+                app.MapScalarApiReference(options =>
+                {
+                    options.Title = "EnterpriseApp API";
+                    options.Servers = [];
+                }).AllowAnonymous();
+                app.MapGet("/", () => Results.Redirect("/scalar/v1")).AllowAnonymous()
+                    .ExcludeFromDescription();
+                break;
+        }
     }
 
     app.UseSerilogRequestLogging();
