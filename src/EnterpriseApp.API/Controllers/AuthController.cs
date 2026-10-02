@@ -5,6 +5,7 @@ using EnterpriseApp.Application.Features.Identity.Auth.Commands.RefreshToken;
 using EnterpriseApp.Application.Features.Identity.Auth.DTOs;
 using EnterpriseApp.Application.Features.Identity.Auth.Queries.GetCurrentUser;
 using MediatR;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -12,7 +13,8 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace EnterpriseApp.API.Controllers;
 
 [ApiController]
-[Route("api/v1/auth")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/auth")]
 public sealed class AuthController(ISender sender) : ControllerBase
 {
     [HttpPost("login")]

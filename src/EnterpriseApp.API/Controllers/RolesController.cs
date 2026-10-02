@@ -9,6 +9,7 @@ using EnterpriseApp.Application.Features.Authorization.Roles.Commands.UnassignRo
 using EnterpriseApp.Application.Features.Authorization.Roles.Queries.GetRoleById;
 using EnterpriseApp.Application.Features.Authorization.Roles.Queries.GetRoles;
 using EnterpriseApp.Domain.Authorization;
+using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,8 @@ namespace EnterpriseApp.API.Controllers;
 /// <c>{module}.{action}[.{qualifier}]</c> (see <c>.claude/rules/authorization.md</c>).
 /// </summary>
 [ApiController]
-[Route("api/v1/roles")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/roles")]
 public sealed class RolesController(ISender sender) : ControllerBase
 {
     [HttpGet]

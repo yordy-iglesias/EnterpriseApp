@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using EnterpriseApp.API.Middleware;
 using EnterpriseApp.API.Services;
 using EnterpriseApp.Application.Common.Authorization;
@@ -52,8 +53,23 @@ try
                 new System.Text.Json.Serialization.JsonStringEnumConverter());
         });
 
+    // ── API Versioning ────────────────────────────────────────────────────────
+    builder.Services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = false;
+        options.ReportApiVersions = true;
+        options.ApiVersionReader = ApiVersionReader.Combine(
+            new UrlSegmentApiVersionReader(),
+            new HeaderApiVersionReader("X-Api-Version"));
+    }).AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    });
+
     // ── OpenAPI (ASP.NET Core 9 native + Scalar UI) ──────────────────────────
-    builder.Services.AddOpenApi();
+    builder.Services.AddOpenApi("v1");
 
     // ── JWT Authentication ────────────────────────────────────────────────────
     var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -152,8 +168,12 @@ try
 
     if (app.Environment.IsDevelopment())
     {
-        app.MapOpenApi().AllowAnonymous();
-        app.MapScalarApiReference().AllowAnonymous();
+        app.MapOpenApi("/openapi/{documentName}.json").AllowAnonymous();
+        app.MapScalarApiReference(options =>
+        {
+            options.Title = "EnterpriseApp API";
+            options.Servers = [];
+        }).AllowAnonymous();
         app.MapGet("/", () => Results.Redirect("/scalar/v1")).AllowAnonymous()
             .ExcludeFromDescription();
     }

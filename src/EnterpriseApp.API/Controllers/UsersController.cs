@@ -8,13 +8,15 @@ using EnterpriseApp.Application.Features.Identity.Users.DTOs;
 using EnterpriseApp.Application.Features.Identity.Users.Queries.GetUserById;
 using EnterpriseApp.Application.Features.Identity.Users.Queries.GetUsers;
 using EnterpriseApp.Domain.Authorization;
+using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseApp.API.Controllers;
 
 [ApiController]
-[Route("api/v1/users")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/users")]
 public sealed class UsersController(ISender sender) : ControllerBase
 {
     [HttpGet]

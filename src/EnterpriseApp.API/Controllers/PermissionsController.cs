@@ -3,6 +3,7 @@ using EnterpriseApp.Application.Features.Authorization.DTOs;
 using EnterpriseApp.Application.Features.Authorization.Permissions.Queries.GetPermissions;
 using EnterpriseApp.Application.Features.Authorization.Users.Queries.GetUserPermissions;
 using EnterpriseApp.Domain.Authorization;
+using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,7 +11,8 @@ namespace EnterpriseApp.API.Controllers;
 
 /// <summary>Read-only catalog of permissions and per-user resolved permission sets.</summary>
 [ApiController]
-[Route("api/v1/permissions")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/permissions")]
 public sealed class PermissionsController(ISender sender) : ControllerBase
 {
     [HttpGet]

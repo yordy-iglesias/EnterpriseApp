@@ -7,6 +7,7 @@ using EnterpriseApp.Application.Features.TodoItems.Queries.GetPagedTodos;
 using EnterpriseApp.Application.Features.TodoItems.Queries.GetTodoById;
 using EnterpriseApp.Domain.ValueObjects;
 using MediatR;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +18,8 @@ namespace EnterpriseApp.API.Controllers;
 /// All responses follow RFC 7807 ProblemDetails on error (via GlobalExceptionMiddleware).
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/todos")]
 [Authorize]
 public sealed class TodosController(ISender sender) : ControllerBase
 {
